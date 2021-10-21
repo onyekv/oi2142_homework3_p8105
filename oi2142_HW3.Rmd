@@ -1,0 +1,83 @@
+---
+title: "HW3, Onyeka Isamah"
+output: github_document
+---
+
+```{r Setup}
+
+library(tidyverse)
+library(p8105.datasets)
+```
+
+
+# Problem 1:
+The data set instacart has `r nrow(instacart) ` rows and `r ncol(instacart)` columns which include `order_id`, `product_id`, `add_to_cart_order`, `reordered user_id`, `eval_set`, `order_number`, `order_dow`, `order_hour_of_day`, `days_since_prior_order`, `product_name`, `aisle_id`, `department_id`, `aisle`, and `departmemt`. There are 134 aisles, the three top aisles that most products are order from include fresh fruits aisle (18726 bananas, ranked #1 in fresh fruit category), the packaged vegetable fruits aisle(Organic Baby Spiniach n = 9784 and ranked as #1 product within that aisle) and the milk aisle (organic whole milk n=4908).
+
+```{r Instacart} 
+data("instacart")
+janitor::clean_names(instacart)
+```
+
+```{r Max Aisle}
+max(instacart$aisle_id)
+```
+
+```{r top products by aisle}
+top_products_by_aisle_df= instacart %>% select(
+         everything()) %>% 
+  group_by(aisle, department) %>% 
+  count(
+    product_name, name = "product_count") %>% 
+  mutate(product_rank = min_rank(desc(product_count)))%>% 
+ 
+   filter(product_rank <= 3)  %>% 
+  arrange(product_rank) %>% arrange(desc(product_count)) 
+
+
+top_products_by_aisle_df
+```
+ Plotting top products by aisle where product count > 10000
+```{r top products plot}
+top_products_by_aisle_df %>% 
+filter(product_count >= 10000) %>% 
+  ggplot(aes(x= product_name, y=product_count)) + geom_point(aes(color= aisle))
+```
+
+
+Table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”.
+
+```{r 3 most popular}
+pop3_df= (select(
+  instacart, order_number, aisle,product_name) %>% 
+  filter(aisle %in% c("baking ingredients", "dog food care", "packaged vegetables fruits")) %>% 
+  
+  group_by(aisle) %>% 
+  count(
+    product_name, name = "product_count") %>% 
+    
+  mutate(product_rank = min_rank(desc(product_count))) %>% 
+    
+   filter(product_rank <= 3)  %>% 
+    
+  arrange(product_rank) %>% arrange(desc(product_count)))
+
+pop3_df
+```
+
+Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table).
+
+```{r mean hod}
+mean_hod = instacart %>% drop_na() %>% 
+  select(product_name,order_hour_of_day, order_dow)  %>% 
+ mutate(
+    
+    order_dow = 
+      recode_factor(order_dow,
+        "0" = "Sunday", "1" = "Monday", "2" = "Tuesday", "3" = "Wednesday", "4"= "Thursday", "5" = "Friday", "6" = "Saturday")) %>% 
+  group_by(product_name, order_dow) %>% 
+  summarise(meanhour = mean(order_hour_of_day)) %>% 
+filter(product_name %in% c( "Pink Lady Apples", "Coffee Ice Cream")) %>% 
+  pivot_wider(names_from = order_dow,  values_from = meanhour) 
+
+mean_hod
+```
