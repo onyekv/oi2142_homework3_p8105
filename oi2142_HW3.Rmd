@@ -102,7 +102,7 @@ newbrfss_df
 ```
 
 
-#In 2002, which states were observed at 7 or more locations? 
+In 2002, which states were observed at 7 or more locations? 
 5 states 
 
 ```{r 2002}
@@ -159,4 +159,59 @@ facetbrfss%>%
   ggplot(aes(x=response, y = data_value, group = locationdesc, color =locationdesc))+ geom_line()+facet_grid(.~year)
 ```
 
+# Problem 3
+
+```{r}
+accel_csv = read_csv("./accel_data.csv")
+```
+
+ 
+
+``` {r}
+ accel_df = accel_csv %>%  pivot_longer(
+              cols = activity.1:activity.1140,
+               names_to = "activity_number",
+               values_to = "activity_count",
+               names_prefix = "activity.") %>% 
+  mutate (
+    weekend = (day == "Saturday" | day == "Sunday")
+  )
+ 
+accel_df
+```
+
+The dataset accel_df has `r nrow(accel_df)` rows and `r ncol(accel_df)` variables. The data set accel_df has the following variables `r colnames(accel_df)`   
+
+Traditional analyses of accelerometer data focus on the total activity over the day. Using your tidied dataset, aggregate accross minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
+
+No apparent trends in the numbers 
+```{r}
+total_activity = 
+  accel_df %>% 
+  group_by(day_id) %>% 
+  summarize(total_activity_count = sum(activity_count))
+knitr::kable(total_activity)
+
+```
+
+
+Accelerometer data allows the inspection activity over the course of the day. Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. Describe in words any patterns or conclusions you can make based on this graph.
+
+```{r Panel}
+accel_df %>% mutate(
+  activity_number = as.numeric(activity_number)) %>% 
+  group_by(day, activity_number) %>% 
+  summarize(avg_value = mean(activity_count)) %>% 
+  
+  
+  ggplot(aes(x= activity_number, y = avg_value, color = day)) + 
+  geom_smooth(se = FALSE) +
+  scale_x_discrete(limit = c(360, 720, 1080, 1440),
+                   labels = c("6", "12","18","24")) + 
+  
+  labs (
+    title = "Average 24 Hr Activity for Days of the Week", x = "Activity Number (Hrs)", y = "Average Activity Counts", color = "day"
+  
+)
+```
 
