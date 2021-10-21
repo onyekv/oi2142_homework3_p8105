@@ -81,3 +81,82 @@ filter(product_name %in% c( "Pink Lady Apples", "Coffee Ice Cream")) %>%
 
 mean_hod
 ```
+
+#Problem 2
+
+```{r import}
+library(p8105.datasets)
+data("brfss_smart2010")
+
+brfss_smart2010
+
+```
+
+```{r cleaning}
+
+newbrfss_df <- brfss_smart2010 %>% separate(Locationdesc,into = c ("state", "County")) %>% 
+select(Response, Topic, everything()) %>% 
+  mutate(Response = factor(Response, levels = c("Poor", "Fair", "Good", "Very good", "Excellent"))) %>% 
+  filter(Topic == "Overall Health") %>% janitor::clean_names() 
+newbrfss_df
+```
+
+
+#In 2002, which states were observed at 7 or more locations? 
+5 states 
+
+```{r 2002}
+brfss2002 = newbrfss_df %>% 
+  filter(year =="2002") %>% 
+  group_by(state) %>% 
+  distinct(county) %>% 
+  count(state) %>% 
+  filter(n>=7) %>% 
+  select(state)
+brfss2002
+```
+
+14 states in 2010
+```{r 2010}
+brfss2010 = newbrfss_df %>% 
+  filter(year =="2010") %>% 
+  group_by(state) %>% 
+  distinct(county) %>% 
+  count(state) %>% 
+  filter(n>=7) %>% 
+  select(state)
+brfss2010
+```
+
+
+Construct a dataset that is limited to Excellent responses, and contains, year, state, and a variable that averages the data_value across locations within a state. Make a “spaghetti” plot of this average value over time within a state (that is, make a plot showing a line for each state across years
+
+```{r Excellent dataset and plot}
+newbrfss_df %>% 
+  select(year, locationabbr, response, data_value, geo_location) %>% 
+  filter(response == "Excellent") %>% 
+  group_by(locationabbr,year) %>% 
+  mutate(avg_data = mean(data_value)) %>% 
+  select(year, locationabbr, avg_data) %>% 
+  
+  
+  ggplot(aes(x=year, y = avg_data, color= locationabbr)) + 
+  geom_line() + theme(legend.position = "right") 
+```
+
+
+Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State.
+```{r facet NY}
+facetbrfss <- brfss_smart2010 %>% 
+select(Response, Topic, everything()) %>% 
+  mutate(Response = factor(Response, levels = c("Poor", "Fair", "Good", "Very good", "Excellent"))) %>% 
+  filter(Topic == "Overall Health") %>% janitor::clean_names() 
+newbrfss_df
+
+facetbrfss%>% 
+  filter(locationabbr == "NY", year %in% c("2006", "2010")) %>% 
+  group_by(year,locationdesc) %>% 
+  ggplot(aes(x=response, y = data_value, group = locationdesc, color =locationdesc))+ geom_line()+facet_grid(.~year)
+```
+
+
